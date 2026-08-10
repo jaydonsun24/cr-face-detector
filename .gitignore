@@ -3,3 +3,4 @@ models/
 *.pth
 venv/
 __pycache__/
+.DS_Store
