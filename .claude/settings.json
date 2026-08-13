@@ -2,7 +2,12 @@
   "permissions": {
     "allow": [
       "Bash(.venv/bin/python -c ' *)",
-      "Bash(/Library/Frameworks/Python.framework/Versions/3.14/bin/pip list *)"
+      "Bash(/Library/Frameworks/Python.framework/Versions/3.14/bin/pip list *)",
+      "Bash(.venv/bin/python -c \"import facenet_pytorch; print\\('ok'\\)\")",
+      "Bash(.venv/bin/pip show *)",
+      "Bash(.venv/bin/pip download *)",
+      "Bash(unzip -p facenet_pytorch-2.6.0-py3-none-any.whl \"*.dist-info/METADATA\")",
+      "Bash(timeout 25 .venv/bin/python -c ' *)"
     ]
   }
 }
