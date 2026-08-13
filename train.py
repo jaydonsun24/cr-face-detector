@@ -12,11 +12,14 @@ for i in range(len(class_names)):
 weighted = torch.tensor(weighted, dtype = torch.float32).to(device)
 
 
+
 loss_fn = nn.CrossEntropyLoss(weight = weighted)
 optimizer = torch.optim.AdamW(params = filter(lambda p: p.requires_grad, model.parameters()),
                                lr=0.0001, weight_decay = 0.01)
 
 print(f"Weight Tensor: {weighted}")
+print(class_names)
+
 
 def train_step(model, dataloader, loss_fn, optimizer, device):
     model.train()
