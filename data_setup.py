@@ -6,8 +6,8 @@ from torch.utils.data import dataloader
 import pathlib
 
 # Global Variables
-BATCH_SIZE = 32
-NUM_WORKERS = os.cpu_count()
+BATCH_SIZE = 128
+NUM_WORKERS = 0
 
 
 # Device agnostic code
@@ -23,7 +23,7 @@ test_image_paths = list(test_dir.glob("*/*.jpg"))
 
 # Make the transform for the model
 train_transform = transforms.Compose([
-    transforms.Resize((224, 224)),
+    transforms.Resize((112, 112)),
     transforms.TrivialAugmentWide(num_magnitude_bins = 31),
     transforms.RandomHorizontalFlip(p=0.5),
     transforms.ToTensor(),
@@ -31,7 +31,7 @@ train_transform = transforms.Compose([
 ])
 
 test_transform = transforms.Compose([
-    transforms.Resize((224, 224)),
+    transforms.Resize((112, 112)),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406],
                          std=[0.229, 0.224, 0.225])

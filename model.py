@@ -9,5 +9,8 @@ for param in model.parameters():
     param.requires_grad = False
 
 model.fc = nn.Linear(in_features=model.fc.in_features, out_features=7).to(device)
-print(model.fc)
+
+for param in model.layer4.parameters():
+    param.requires_grad = True
+
 

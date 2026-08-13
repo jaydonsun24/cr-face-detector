@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(.venv/bin/python -c ' *)",
+      "Bash(/Library/Frameworks/Python.framework/Versions/3.14/bin/pip list *)"
+    ]
+  }
+}
