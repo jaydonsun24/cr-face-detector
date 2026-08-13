@@ -1,8 +1,25 @@
+# Virtual environment
+venv/
+.venv/
+
+# Python
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# Data & model weights (big, rebuildable, not code)
 data/
 models/
 *.pth
-venv/
-__pycache__/
+*.pt
+
+# Keep the empty folder structure in git
+!data/.gitkeep
+!models/.gitkeep
+
+# macOS
 .DS_Store
+
+# Project docs / scratch
 Emotion_Emote_CV_Project_Guide.pdf
 guide.txt
