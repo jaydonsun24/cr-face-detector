@@ -27,6 +27,9 @@ while True:
 
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  
     faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))  # Detect faces
+    frame_count = 0
+    last_emotion = ""
+    last_conf = 0.0
     for (x, y, w, h) in faces:
         # Pad relative to the face box, then clamp to the frame so we never
         # slice with a negative index (numpy would wrap around silently).
@@ -44,14 +47,19 @@ while True:
         rgb_crop = cv2.cvtColor(gray_crop, cv2.COLOR_GRAY2RGB)
         img = Image.fromarray(rgb_crop)
         tensor = test_transform(img).unsqueeze(0).to(device)
-        with torch.no_grad():
-            output = model(tensor)
-            y_pred = torch.argmax(output, dim = 1)
-            emotion = class_names[y_pred.item()]
-            probs = torch.softmax(output, dim=1)[0]
-        cv2.putText(frame, f'Emotion: {emotion}', (x, y - 10), cv2.FONT_HERSHEY_COMPLEX, 0.9, (36, 255, 12), 2)
-        cv2.putText(frame, f'Confidence: {probs[y_pred.item()]:.2f}', (x, y - 40), cv2.FONT_HERSHEY_COMPLEX, 0.9, (36, 255, 12), 2)
-        cv2.imshow('Face Detection', frame)
+        if frame_count % 5 == 0:
+            with torch.no_grad():
+                output = model(tensor)
+                y_pred = torch.argmax(output, dim = 1)
+                emotion = class_names[y_pred.item()]
+                probs = torch.softmax(output, dim=1)[0]
+            cv2.putText(frame, f'Emotion: {emotion}', (x, y - 10), cv2.FONT_HERSHEY_COMPLEX, 0.9, (36, 255, 12), 2)
+            cv2.putText(frame, f'Confidence: {probs[y_pred.item()]:.2f}', (x, y - 40), cv2.FONT_HERSHEY_COMPLEX, 0.9, (36, 255, 12), 2)
+            cv2.imshow('Face Detection', frame)
+        else:
+            cv2.putText(frame, f'Emotion: {last_emotion}', (x, y - 10), cv2.FONT_HERSHEY_COMPLEX, 0.9, (36, 255, 12), 2)
+            cv2.putText(frame, f'Confidence: {last_conf:.2f}', (x, y - 40), cv2.FONT_HERSHEY_COMPLEX, 0.9, (36, 255, 12), 2)
+            cv2.imshow('Face Detection', frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 cap.release()

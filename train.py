@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from data_setup import train_dataloader, test_dataloader, device, class_names, train_data
+from data_setup import train_dataloader, test_dataloader, device, class_names, train_data, class_to_idx
 from model import model
 from tqdm import tqdm
 from collections import Counter
@@ -9,6 +9,7 @@ weighted = []
 for i in range(len(class_names)):
     weighted.append(len(train_data.targets) / (len(class_names) * Counter(train_data.targets)[i]))
 
+weighted[class_to_idx['sad']] *= 1.5
 weighted = torch.tensor(weighted, dtype = torch.float32).to(device)
 
 
