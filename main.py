@@ -29,9 +29,6 @@ emotes = {'angry': angry_image,
           'happy': happy_image, 
           'sad': sad_image, 
           'surprise': surprise_image}
-frame_count = 0
-last_emotion = ""
-last_conf = 0.0
 
 while True:
     ret, frame = cap.read()  
@@ -61,6 +58,8 @@ while True:
         with torch.no_grad():
             output = model(tensor)
             y_pred = torch.argmax(output, dim=1)
+            if class_names[y_pred.item()] == 'neutral':
+                y_pred = torch.topk(output, 2).indices[0][1]
             emotion = class_names[y_pred.item()]
             probs = torch.softmax(output, dim=1)[0]
             conf = probs[y_pred.item()].item()
@@ -71,7 +70,7 @@ while True:
         # Neutral deliberately has no emote, so the corner stays as plain video.
         if emotion in emotes:
             emote = emotes[emotion]
-            eh, ew = emote.shape[:2]          # size the region off the emote
+            eh, ew = emote.shape[:2]          
             alpha = emote[:, :, 3:4] / 255.0
             color = emote[:, :, :3]
             overlay = frame[0:eh, 0:ew]
