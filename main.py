@@ -1,8 +1,9 @@
 import cv2
 import torch
+import numpy as np
 from PIL import Image
 from model import model
-from data_setup import test_transform, device, class_names, class_to_idx
+from data_setup import test_transform, device, class_names
 
 model.load_state_dict(torch.load("models/emotion_model.pth"))
 model.eval()
@@ -13,11 +14,24 @@ if not cap.isOpened():
     print("Error: Could not open webcam.")
     exit()
 
-frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-
 PAD = 0.2  # fraction of the face box to add on each side
 
+
+angry_image = cv2.resize(cv2.imread('assets/emotes/angry.png', cv2.IMREAD_UNCHANGED), (500, 500))
+disgust_image = cv2.resize(cv2.imread('assets/emotes/disgust.png', cv2.IMREAD_UNCHANGED), (500, 500))
+fear_image = cv2.resize(cv2.imread('assets/emotes/fear.png', cv2.IMREAD_UNCHANGED), (500, 500))
+happy_image = cv2.resize(cv2.imread('assets/emotes/happy.png', cv2.IMREAD_UNCHANGED), (500, 500))
+sad_image = cv2.resize(cv2.imread('assets/emotes/sad.png', cv2.IMREAD_UNCHANGED), (500, 500))
+surprise_image = cv2.resize(cv2.imread('assets/emotes/surprise.png', cv2.IMREAD_UNCHANGED), (500, 500))
+emotes = {'angry': angry_image, 
+          'disgust': disgust_image, 
+          'fear': fear_image, 
+          'happy': happy_image, 
+          'sad': sad_image, 
+          'surprise': surprise_image}
+frame_count = 0
+last_emotion = ""
+last_conf = 0.0
 
 while True:
     ret, frame = cap.read()  
@@ -27,9 +41,6 @@ while True:
 
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  
     faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))  # Detect faces
-    frame_count = 0
-    last_emotion = ""
-    last_conf = 0.0
     for (x, y, w, h) in faces:
         # Pad relative to the face box, then clamp to the frame so we never
         # slice with a negative index (numpy would wrap around silently).
@@ -47,19 +58,26 @@ while True:
         rgb_crop = cv2.cvtColor(gray_crop, cv2.COLOR_GRAY2RGB)
         img = Image.fromarray(rgb_crop)
         tensor = test_transform(img).unsqueeze(0).to(device)
-        if frame_count % 5 == 0:
-            with torch.no_grad():
-                output = model(tensor)
-                y_pred = torch.argmax(output, dim = 1)
-                emotion = class_names[y_pred.item()]
-                probs = torch.softmax(output, dim=1)[0]
-            cv2.putText(frame, f'Emotion: {emotion}', (x, y - 10), cv2.FONT_HERSHEY_COMPLEX, 0.9, (36, 255, 12), 2)
-            cv2.putText(frame, f'Confidence: {probs[y_pred.item()]:.2f}', (x, y - 40), cv2.FONT_HERSHEY_COMPLEX, 0.9, (36, 255, 12), 2)
-            cv2.imshow('Face Detection', frame)
-        else:
-            cv2.putText(frame, f'Emotion: {last_emotion}', (x, y - 10), cv2.FONT_HERSHEY_COMPLEX, 0.9, (36, 255, 12), 2)
-            cv2.putText(frame, f'Confidence: {last_conf:.2f}', (x, y - 40), cv2.FONT_HERSHEY_COMPLEX, 0.9, (36, 255, 12), 2)
-            cv2.imshow('Face Detection', frame)
+        with torch.no_grad():
+            output = model(tensor)
+            y_pred = torch.argmax(output, dim=1)
+            emotion = class_names[y_pred.item()]
+            probs = torch.softmax(output, dim=1)[0]
+            conf = probs[y_pred.item()].item()
+
+        cv2.putText(frame, f'Emotion: {emotion}', (x, y - 10), cv2.FONT_HERSHEY_COMPLEX, 0.9, (36, 255, 12), 2)
+        cv2.putText(frame, f'Confidence: {conf:.2f}', (x, y - 40), cv2.FONT_HERSHEY_COMPLEX, 0.9, (36, 255, 12), 2)
+
+        # Neutral deliberately has no emote, so the corner stays as plain video.
+        if emotion in emotes:
+            emote = emotes[emotion]
+            eh, ew = emote.shape[:2]          # size the region off the emote
+            alpha = emote[:, :, 3:4] / 255.0
+            color = emote[:, :, :3]
+            overlay = frame[0:eh, 0:ew]
+            overlay[:] = ((1 - alpha) * overlay + alpha * color).astype(np.uint8)
+
+    cv2.imshow('Face Detection', frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 cap.release()
